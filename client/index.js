@@ -13,14 +13,19 @@ document.getElementById('file').onchange = function(event) {
     const fileList = document.getElementById('file').files;
     const reader = new FileReader();
     reader.onload = function(event) {
+        document.getElementById('charts').classList.remove('hidden');
+        document.getElementById('selectButton').classList.add('hidden');
         let senders = [];
         let linesByDate = [];
+        let linesByHour = [];
         let words = [];
         let previousSender = null;
         let previousDate = null;
+        let previousHour = null;
         let lines = event.target.result.split(/[\n]|[↵]/gi);
-        for(i = 0; i < lines.length; i++){
-            message = {};
+        //lines = lines.splice(lines.length - 1000, lines.length);
+        for(let i = 0; i < lines.length; i++){
+            let message = {};
             if(lines[i].includes('Video weggelassen') || lines[i] === '\n' || lines[i].includes('Bild weggelassen') || lines[i].includes('hat die Gruppe verlassen') || lines[i].includes('hinzugefügt.') || lines[i].includes('hat die Telefonnummer gewechselt. ‎Tippe,') || lines[i].includes(' hat die Gruppe “')  || lines[i].includes('Audio weggelassen')|| lines[i].includes('GIF weggelassen') || lines[i].includes(' hat die Gruppe erstellt.') || lines[i].includes('hat das Gruppenbild geändert.') || lines[i].includes('hat das Gruppenbild gelöscht.') || lines[i].includes('Du wurdest hinzugefügt') || lines[i].includes('‎Nachrichten an diese Gruppe sind jetzt mit Ende-zu-Ende-Verschlüsselung geschützt.') || (lines[i].includes('den Betreff zu ') && lines[i].includes(' geändert.'))){
                 continue;
             }
@@ -40,6 +45,12 @@ document.getElementById('file').onchange = function(event) {
                 message.date = previousDate;
             }
 
+            if(lines[i].startsWith('[') && lines[i].startsWith(']', 19)){
+                message.hour = parseInt(parts[0].split('] ')[0].split(', ')[1].split(':')[0]);
+                previousHour = message.hour;
+            }else{
+                message.hour = previousHour;
+            }
 
             let knownSender = false;
             for(j = 0; j < senders.length; j++){
@@ -57,8 +68,9 @@ document.getElementById('file').onchange = function(event) {
             }
 
             linesByDate.push({value: messageContent, date:message.date});
+            linesByHour.push({value: messageContent, hour: message.hour, sender: message.sender})
             //words
-            singleWords = messageContent.toLowerCase();
+            let singleWords = messageContent.toLowerCase();
             singleWords = singleWords.replace(/[,]|[.]|[!]|[?]|["]|[\n]|[↵]/gi,'')
             singleWords = singleWords.split(' ');
             for(j = 0; j < singleWords.length; j++){
@@ -70,8 +82,8 @@ document.getElementById('file').onchange = function(event) {
                 for(u = 0; u < words.length; u++){
                     if(words[u].value === singleWords[j]){
                         words[u].count ++;
-                        wordSenders = words[u].senders;
-                        alreadyASender = false
+                        let wordSenders = words[u].senders;
+                        let alreadyASender = false
                         for(l = 0; l < wordSenders.length; l++){
                             if(wordSenders[l].name === message.sender){
                                 wordSenders[l].count ++;
@@ -102,6 +114,8 @@ document.getElementById('file').onchange = function(event) {
                 }
             })
         }
+
+        drawByHour(linesByHour, senders);
         drawMostChattersChart(senders);
         drawTopWords(words.slice(0, 25), senders);
         drawTimeline(linesByDate);
@@ -127,7 +141,7 @@ function drawMostChattersChart(senders){
         data: {
             labels: labels,
             datasets: [{
-                label: '# of messages',
+                label: '# of messages by date',
                 data: data,
                 backgroundColor: backgroundColor,
                 borderColor: borderColor,
@@ -173,13 +187,16 @@ function drawTopWords(words, senders){
         }
 
     }
-    console.log(datasets)
     let ctx = document.getElementById("topWords");
+    ctx.height = words.length * senders.length * 20;
     new Chart(ctx, {
         type: 'horizontalBar',
         data: {
             labels: labels,
             datasets: datasets
+        },
+        options: {
+            maintainAspectRatio: false,
         }
     });
 }
@@ -218,6 +235,49 @@ function drawTimeline(linesByDate){
                 borderColor: 'rgba(54, 162, 235, 1)',
                 borderWidth: 1
             }]
+        }
+    });
+}
+function drawByHour(linesByHour, senders){
+    let hoursBySender = [];
+    let labels = [];
+    for(let i = 0; i < senders.length; i++) {
+        for (let line of linesByHour) {
+            if (!hoursBySender[i]){
+                hoursBySender[i] = [];
+            }
+            if(line.sender === senders[i].name){
+                if (hoursBySender[i][line.hour]) {
+                    hoursBySender[i][line.hour]++;
+                } else {
+                    hoursBySender[i][line.hour] = 1;
+                }
+            }
+        }
+    }
+    let datasets = [];
+    for(let i = 0; i < senders.length; i++){
+        datasets[i] = {
+            data: []
+        };
+        for(let hour = 0; hour < 24; hour++){
+            if(i===0){
+                labels.push(hour + ':00');
+            }
+            datasets[i].data.push(hoursBySender[i][hour]);
+        }
+        datasets[i].label = senders[i].name;
+        datasets[i].backgroundColor = 'rgba('+colors[i+0 % colors.length]+',0.2)';
+        datasets[i].borderColor = 'rgba('+colors[i+0 % colors.length]+',1)';
+        datasets[i].borderWidth = 1
+    }
+    console.log(datasets);
+    let ctx = document.getElementById("byHour");
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: labels,
+            datasets: datasets
         }
     });
 }

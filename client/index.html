@@ -2,17 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
     <title>WhatsApp Stats</title>
 </head>
-<body class="uk-text-center">
-    <div id="selectButton" class="uk-margin">
+<body class="Center-Container">
+    <div id="selectButton" class="Absolute-Center uk-text-center">
         <h1 class="uk-heading-line uk-text-center"><span>select a _chat.txt file</span></h1>
         <div uk-form-custom>
             <input id="file" type="file">
             <button class="uk-button uk-button-default" type="button" tabindex="-1">Select</button>
         </div>
     </div>
-    <div class="uk-child-width-1-2@s uk-grid-collapse uk-text-center" uk-grid>
+    <div id="charts" class="uk-child-width-1-2@s uk-grid-collapse uk-text-center hidden" uk-grid>
         <div>
             <div class="uk-tile uk-tile-default">
                 <canvas id="myChart" width="400" height="400"></canvas>
@@ -23,15 +24,21 @@
                 <canvas id="timeline" width="400" height="400"></canvas>
             </div>
         </div>
-    </div>
-    <div>
-        <div class="uk-tile uk-tile-default">
-            <canvas id="topWords" width="400" height="400"></canvas>
+        <div>
+            <div class="uk-tile uk-tile-default">
+                <canvas id="topWords" width="400" height="400"></canvas>
+            </div>
+        </div>
+        <div>
+            <div class="uk-tile uk-tile-default">
+                <canvas id="byHour" width="400" height="400"></canvas>
+            </div>
         </div>
     </div>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.0.0-rc.19/css/uikit.min.css" />
+<link rel="stylesheet" type="text/css" href="./style.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.0.0-rc.19/js/uikit.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/uikit/3.0.0-rc.19/js/uikit-icons.min.js"></script>
 <script src="./index.js"></script>
